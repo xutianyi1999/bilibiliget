@@ -22,10 +22,8 @@ public class BilibiliGetApplication {
             new MThread(map.get(Common.VIDEO), Common.VIDEO).start();
             new MThread(map.get(Common.AUDIO), Common.AUDIO).start();
 
-            while (true) {
-                if (Thread.activeCount() == 1) {
-                    break;
-                }
+            while (Thread.activeCount() > 1) {
+                Thread.sleep(500);
             }
 
             String command = new File(System.getProperty("java.class.path")).getParent() + "/lib/ffmpeg.exe -i " + Common.VIDEO_FILE.getPath() + " -i " + Common.AUDIO_FILE.getPath() + " -c copy ./a" + Common.VIDEO_FILE.getName();
