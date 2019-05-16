@@ -1,5 +1,6 @@
 import common.Common;
 import crawler.VideoCrawler;
+import download.DownloadUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import thread.MThread;
@@ -26,25 +27,29 @@ public class BilibiliGetApplication {
             }
 
             logger.info("Start download");
-            new MThread(map.get(Common.VIDEO), Common.VIDEO).start();
-            new MThread(map.get(Common.AUDIO), Common.AUDIO).start();
 
-            while (Thread.activeCount() > 1) {
-                Thread.sleep(500);
-            }
+            if (map.get(Common.AUDIO) != null) {
+                new MThread(map.get(Common.VIDEO), Common.VIDEO).start();
+                new MThread(map.get(Common.AUDIO), Common.AUDIO).start();
 
-            logger.info("Download completed");
-            logger.info("Call ffmpeg");
-            String command = new File(System.getProperty("java.class.path")).getParent() + "/lib/ffmpeg.exe -i " + Common.VIDEO_FILE.getPath() + " -i " + Common.AUDIO_FILE.getPath() + " -c copy ./a" + Common.VIDEO_FILE.getName();
-            Runtime runtime = Runtime.getRuntime();
-            process = runtime.exec(command);
-            process.waitFor();
+                while (Thread.activeCount() > 1) {
+                    Thread.sleep(500);
+                }
 
-            if (Common.VIDEO_FILE.delete() && Common.AUDIO_FILE.delete()) {
-                logger.info("Finish");
+                logger.info("Download completed");
+                logger.info("Call ffmpeg");
+                String command = new File(System.getProperty("java.class.path")).getParent() + "/lib/ffmpeg.exe -i " + Common.VIDEO_FILE.getPath() + " -i " + Common.AUDIO_FILE.getPath() + " -c copy ./a" + Common.VIDEO_FILE.getName();
+                Runtime runtime = Runtime.getRuntime();
+                process = runtime.exec(command);
+                process.waitFor();
+
+                if (!Common.VIDEO_FILE.delete() || !Common.AUDIO_FILE.delete()) {
+                    logger.error("File deletion failed");
+                }
             } else {
-                logger.error("File deletion failed");
+                DownloadUtils.downloadFile(map.get(Common.VIDEO), Common.VIDEO);
             }
+            logger.info("Finish");
         } catch (Exception e) {
             logger.error("Running error");
             e.printStackTrace();

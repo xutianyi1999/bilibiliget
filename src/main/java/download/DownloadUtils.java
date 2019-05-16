@@ -12,7 +12,7 @@ import java.net.URLConnection;
 
 public class DownloadUtils {
 
-    private static URLConnection getUrlConnection(URL url) throws Exception {
+    public static URLConnection getUrlConnection(URL url) throws Exception {
         URLConnection urlConnection = url.openConnection();
         urlConnection.setConnectTimeout(Common.TIMEOUT);
         urlConnection.setReadTimeout(Common.TIMEOUT);
