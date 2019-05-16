@@ -38,9 +38,9 @@ public class VideoCrawler {
                 String data = element.data();
 
                 if (data.contains("window.__playinfo__")) {
-                    logger.info("Get json data");
                     String[] str = data.split("=", 2);
                     map = JSON.parseObject(str[1], Map.class);
+                    logger.info("Get json data");
                     break;
                 }
             }
@@ -50,13 +50,13 @@ public class VideoCrawler {
                     String data = element.data();
 
                     if (data.contains("window.__INITIAL_STATE__")) {
-                        logger.info("Get json data");
                         String[] str = data.split("=", 2);
                         Map tempMap = JSON.parseObject(str[1].split(";", 2)[0], Map.class);
                         Map videoMap = (Map) tempMap.get("videoData");
                         URLConnection urlConnection = DownloadUtils.getUrlConnection(new URL(Common.PLAYER_API + "?&avid=" + tempMap.get("aid") + "&cid=" + videoMap.get("cid") + "&fnval=16"));
                         inputStream = urlConnection.getInputStream();
                         map = JSON.parseObject(IOUtils.toString(inputStream, "UTF-8"), Map.class);
+                        logger.info("Get json data");
                         break;
                     }
                 }
