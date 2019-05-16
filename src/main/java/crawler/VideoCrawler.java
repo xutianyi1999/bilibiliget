@@ -2,6 +2,8 @@ package crawler;
 
 import com.alibaba.fastjson.JSON;
 import common.Common;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -15,6 +17,9 @@ import java.util.List;
 import java.util.Map;
 
 public class VideoCrawler {
+
+    private static Logger logger = LogManager.getLogger(VideoCrawler.class);
+
     public static Map<String, URL> getPlayerUrl() {
         try {
             Connection connect = Jsoup.connect(Common.URL);
@@ -27,6 +32,7 @@ public class VideoCrawler {
                 String data = element.data();
 
                 if (data.contains("window.__playinfo__")) {
+                    logger.info("Get json data");
                     String[] str = data.split("=", 2);
                     map = JSON.parseObject(str[1], Map.class);
                     break;
@@ -34,6 +40,7 @@ public class VideoCrawler {
             }
 
             if (map == null) {
+                logger.error("Get json fault");
                 return null;
             }
 
@@ -44,9 +51,10 @@ public class VideoCrawler {
             hashMap.put(Common.AUDIO, new URL(getMax((List) dash.get(Common.AUDIO)).get("baseUrl").toString()));
             return hashMap;
         } catch (Exception e) {
+            logger.error("Crawler error");
             e.printStackTrace();
+            return null;
         }
-        return null;
     }
 
     private static Map getMax(List list) {
