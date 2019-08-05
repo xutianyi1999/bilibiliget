@@ -39,21 +39,15 @@ public class BilibiliGetApplication {
             }
 
             logger.info("Call ffmpeg");
-            String command = "./lib/ffmpeg -i " + Common.VIDEO_FILE.getAbsolutePath() + " -i " + Common.AUDIO_FILE.getAbsolutePath() + " -c copy ./" + Common.VIDEO_FILE.getName();
+            String command = "ffmpeg -i " + Common.VIDEO_FILE.getAbsolutePath() + " -i " + Common.AUDIO_FILE.getAbsolutePath() + " -c copy ./final_" + Common.VIDEO_FILE.getName();
             Runtime runtime = Runtime.getRuntime();
-            Process process = null;
 
             try {
-                process = runtime.exec(command);
-                process.waitFor();
+                runtime.exec(command).waitFor();
             } catch (Exception e) {
                 logger.error("Call ffmpeg error");
                 e.printStackTrace();
                 return;
-            } finally {
-                if (process != null) {
-                    process.destroy();
-                }
             }
 
             if (!Common.VIDEO_FILE.delete() || !Common.AUDIO_FILE.delete()) {
