@@ -5,58 +5,63 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import thread.MThread;
 
-import java.io.File;
 import java.net.URL;
 import java.util.Map;
 
 public class BilibiliGetApplication {
 
-    private static Logger logger = LogManager.getLogger(BilibiliGetApplication.class);
+    private static Logger logger = LogManager.getLogger(BilibiliGetApplication.class.getName());
 
     public static void main(String[] args) {
-        Process process = null;
+        Common.URL = args[0];
+        logger.info("Crawler start");
+        Map<String, URL> map = VideoCrawler.getPlayerUrl();
 
-        try {
-            Common.URL = args[0];
-            logger.info("Crawler start");
-            Map<String, URL> map = VideoCrawler.getPlayerUrl();
+        if (map == null) {
+            logger.error("Get url fault");
+            return;
+        }
 
-            if (map == null) {
-                logger.error("Get url fault");
-                return;
-            }
+        logger.info("Start download");
 
-            logger.info("Start download");
+        if (map.get(Common.AUDIO) != null) {
+            new MThread(map.get(Common.VIDEO), Common.VIDEO).start();
+            new MThread(map.get(Common.AUDIO), Common.AUDIO).start();
 
-            if (map.get(Common.AUDIO) != null) {
-                new MThread(map.get(Common.VIDEO), Common.VIDEO).start();
-                new MThread(map.get(Common.AUDIO), Common.AUDIO).start();
-
+            try {
                 while (Thread.activeCount() > 1) {
                     Thread.sleep(500);
                 }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                logger.error("Thread error");
+                return;
+            }
 
-                logger.info("Download completed");
-                logger.info("Call ffmpeg");
-                String command = new File(System.getProperty("java.class.path")).getParent() + "/lib/ffmpeg.exe -i " + Common.VIDEO_FILE.getPath() + " -i " + Common.AUDIO_FILE.getPath() + " -c copy ./a" + Common.VIDEO_FILE.getName();
-                Runtime runtime = Runtime.getRuntime();
+            logger.info("Call ffmpeg");
+            String command = "./lib/ffmpeg -i " + Common.VIDEO_FILE.getAbsolutePath() + " -i " + Common.AUDIO_FILE.getAbsolutePath() + " -c copy ./" + Common.VIDEO_FILE.getName();
+            Runtime runtime = Runtime.getRuntime();
+            Process process = null;
+
+            try {
                 process = runtime.exec(command);
                 process.waitFor();
-
-                if (!Common.VIDEO_FILE.delete() || !Common.AUDIO_FILE.delete()) {
-                    logger.error("File deletion failed");
+            } catch (Exception e) {
+                logger.error("Call ffmpeg error");
+                e.printStackTrace();
+                return;
+            } finally {
+                if (process != null) {
+                    process.destroy();
                 }
-            } else {
-                DownloadUtils.downloadFile(map.get(Common.VIDEO), Common.VIDEO);
             }
-            logger.info("Finish");
-        } catch (Exception e) {
-            logger.error("Running error");
-            e.printStackTrace();
-        } finally {
-            if (process != null) {
-                process.destroy();
+
+            if (!Common.VIDEO_FILE.delete() || !Common.AUDIO_FILE.delete()) {
+                logger.error("File deletion failed");
             }
+        } else {
+            DownloadUtils.downloadFile(map.get(Common.VIDEO), Common.VIDEO);
         }
+        logger.info("Finish");
     }
 }

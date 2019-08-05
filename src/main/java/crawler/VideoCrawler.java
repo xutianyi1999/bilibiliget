@@ -3,7 +3,6 @@ package crawler;
 import com.alibaba.fastjson.JSON;
 import common.Common;
 import download.DownloadUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.Connection;
@@ -12,6 +11,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
@@ -22,55 +22,78 @@ import java.util.Map;
 
 public class VideoCrawler {
 
-    private static Logger logger = LogManager.getLogger(VideoCrawler.class);
+    private static Logger logger = LogManager.getLogger(VideoCrawler.class.getName());
 
     public static Map<String, URL> getPlayerUrl() {
-        InputStream inputStream = null;
+        Connection connect = Jsoup.connect(Common.URL);
+        connect.header("User-Agent", Common.USER_AGENT);
+        Document document;
 
         try {
-            Connection connect = Jsoup.connect(Common.URL);
-            connect.header("User-Agent", Common.USER_AGENT);
-            Document document = connect.get();
-            Elements elements = document.getElementsByTag("script");
-            Map map = null;
+            document = connect.get();
+        } catch (IOException e) {
+            logger.error("Connect error");
+            e.printStackTrace();
+            return null;
+        }
 
+        Elements elements = document.getElementsByTag("script");
+        Map map = null;
+
+        for (Element element : elements) {
+            String data = element.data();
+
+            if (data.contains("window.__playinfo__")) {
+                String[] str = data.split("=", 2);
+                map = JSON.parseObject(str[1], Map.class);
+                logger.info("Get json data");
+                break;
+            }
+        }
+
+        if (map == null) {
             for (Element element : elements) {
                 String data = element.data();
 
-                if (data.contains("window.__playinfo__")) {
+                if (data.contains("window.__INITIAL_STATE__")) {
                     String[] str = data.split("=", 2);
-                    map = JSON.parseObject(str[1], Map.class);
-                    logger.info("Get json data");
-                    break;
-                }
-            }
+                    Map tempMap = JSON.parseObject(str[1].split(";", 2)[0], Map.class);
+                    Map videoMap = (Map) tempMap.get("videoData");
+                    URLConnection urlConnection;
 
-            if (map == null) {
-                for (Element element : elements) {
-                    String data = element.data();
+                    try {
+                        urlConnection = DownloadUtils.getUrlConnection(new URL(Common.PLAYER_API + "?&avid=" + tempMap.get("aid") + "&cid=" + videoMap.get("cid") + "&fnval=16"));
+                    } catch (Exception e) {
+                        logger.error("Connection error");
+                        e.printStackTrace();
+                        return null;
+                    }
 
-                    if (data.contains("window.__INITIAL_STATE__")) {
-                        String[] str = data.split("=", 2);
-                        Map tempMap = JSON.parseObject(str[1].split(";", 2)[0], Map.class);
-                        Map videoMap = (Map) tempMap.get("videoData");
-                        URLConnection urlConnection = DownloadUtils.getUrlConnection(new URL(Common.PLAYER_API + "?&avid=" + tempMap.get("aid") + "&cid=" + videoMap.get("cid") + "&fnval=16"));
-                        inputStream = urlConnection.getInputStream();
-                        map = JSON.parseObject(IOUtils.toString(inputStream, "UTF-8"), Map.class);
+                    try (
+                            InputStream inputStream = urlConnection.getInputStream()
+                    ) {
+                        map = JSON.parseObject(inputStream, Map.class);
                         logger.info("Get json data");
                         break;
+                    } catch (IOException e) {
+                        logger.error("Format json error");
+                        e.printStackTrace();
+                        return null;
                     }
                 }
             }
+        }
 
-            if (map == null) {
-                logger.error("Get json fault");
-                return null;
-            }
+        if (map == null) {
+            logger.error("Get json fault");
+            return null;
+        }
 
-            Map data = (Map) map.get("data");
-            Map dash = (Map) data.get("dash");
-            HashMap<String, URL> hashMap = new HashMap<>();
+        Map data = (Map) map.get("data");
+        Map dash = (Map) data.get("dash");
+        HashMap<String, URL> hashMap = new HashMap<>();
 
+        try {
             if (dash != null) {
                 hashMap.put(Common.VIDEO, new URL(getMax((List) dash.get(Common.VIDEO)).get("baseUrl").toString()));
                 hashMap.put(Common.AUDIO, new URL(getMax((List) dash.get(Common.AUDIO)).get("baseUrl").toString()));
@@ -79,20 +102,12 @@ public class VideoCrawler {
                 Map tempMap = (Map) tempList.get(0);
                 hashMap.put(Common.VIDEO, new URL(tempMap.get("url").toString()));
             }
-            return hashMap;
         } catch (Exception e) {
-            logger.error("Crawler error");
+            logger.error("URL error");
             e.printStackTrace();
             return null;
-        } finally {
-            try {
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
         }
+        return hashMap;
     }
 
     private static Map getMax(List list) {
