@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class BilibiliGetApplication {
 
-    private static Logger logger = LogManager.getLogger(BilibiliGetApplication.class.getName());
+    private static Logger logger = LogManager.getLogger(BilibiliGetApplication.class);
 
     public static void main(String[] args) {
         Common.URL = args[0];

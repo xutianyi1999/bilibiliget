@@ -22,7 +22,7 @@ import java.util.Map;
 
 public class VideoCrawler {
 
-    private static Logger logger = LogManager.getLogger(VideoCrawler.class.getName());
+    private static Logger logger = LogManager.getLogger(VideoCrawler.class);
 
     public static Map<String, URL> getPlayerUrl() {
         Connection connect = Jsoup.connect(Common.URL);
