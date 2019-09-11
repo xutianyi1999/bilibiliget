@@ -13,6 +13,11 @@ public class BilibiliGetApplication {
     private static Logger logger = LogManager.getLogger(BilibiliGetApplication.class);
 
     public static void main(String[] args) {
+        if (args.length == 0) {
+            logger.error("Please enter URL");
+            return;
+        }
+
         Common.URL = args[0];
         logger.info("Crawler start");
         Map<String, URL> map = VideoCrawler.getPlayerUrl();
