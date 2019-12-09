@@ -1,8 +1,6 @@
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import reactor.core.publisher.Flux;
@@ -22,19 +20,21 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 public class BilibiliGetApplication {
 
-  private static final Logger LOGGER = LogManager.getLogger(BilibiliGetApplication.class);
   private static String target;
 
   public static void main(String[] args) throws IOException {
+    Logger logger = Logger.getGlobal();
+
     if (args.length == 0) {
-      LOGGER.error("Please enter URL");
+      logger.severe("Please enter URL");
       return;
     }
 
-    LOGGER.info("Process start");
+    logger.info("Process start");
     target = args[0];
 
     Flux.fromStream(
@@ -48,7 +48,7 @@ public class BilibiliGetApplication {
       .filter(data -> data.contains("window.__INITIAL_STATE__") || data.contains("window.__playinfo__"))
       .next()
       .flatMap(data -> Mono.<JSONObject>create(sink -> {
-          LOGGER.info("Get json data");
+        logger.info("Get json data");
 
           String[] str = data.split("=", 2);
 
@@ -64,7 +64,7 @@ public class BilibiliGetApplication {
           }
         })
       ).flatMap(json -> {
-      LOGGER.info("Start download");
+      logger.info("Start download");
 
       JSONObject data = json.getJSONObject("data");
       JSONObject dash = data.getJSONObject("dash");
@@ -84,7 +84,7 @@ public class BilibiliGetApplication {
       }
     }).subscribe(list -> {
       if (list.size() == 2) {
-        LOGGER.info("Call ffmpeg");
+        logger.info("Call ffmpeg");
 
         File videoFile = list.get(0);
         File audioFile = list.get(1);
@@ -95,18 +95,18 @@ public class BilibiliGetApplication {
           Runtime.getRuntime().exec(command).waitFor();
 
           if (!videoFile.delete() || !audioFile.delete()) {
-            LOGGER.error("Delete temp error");
+            logger.severe("Delete temp error");
           }
-          LOGGER.info("Success " + finalFile);
+          logger.info("Success " + finalFile);
         } catch (Exception e) {
-          LOGGER.error("Call ffmpeg error");
+          logger.severe("Call ffmpeg error");
           e.printStackTrace();
         }
       } else {
-        LOGGER.info("Success " + list.get(0).getName());
+        logger.info("Success " + list.get(0).getName());
       }
     }, throwable -> {
-      LOGGER.error("Run error");
+      logger.severe("Run error");
       throwable.printStackTrace();
     });
   }
