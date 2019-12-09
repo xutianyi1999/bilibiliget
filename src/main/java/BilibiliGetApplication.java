@@ -48,7 +48,7 @@ public class BilibiliGetApplication {
       .filter(data -> data.contains("window.__INITIAL_STATE__") || data.contains("window.__playinfo__"))
       .next()
       .flatMap(data -> Mono.<JSONObject>create(sink -> {
-        logger.info("Get json data");
+          logger.info("Get json data");
 
           String[] str = data.split("=", 2);
 
@@ -58,9 +58,7 @@ public class BilibiliGetApplication {
             JSONObject tempData = JSON.parseObject(
               str[1].split(";", 2)[0]
             );
-
-            JSONObject videoData = tempData.getJSONObject("videoData");
-            sink.success(getJsonObject(tempData, videoData));
+            sink.success(getJsonObject(tempData, tempData.getJSONObject("videoData")));
           }
         })
       ).flatMap(json -> {
