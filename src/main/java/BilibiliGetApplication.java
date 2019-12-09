@@ -58,7 +58,9 @@ public class BilibiliGetApplication {
             JSONObject tempData = JSON.parseObject(
               str[1].split(";", 2)[0]
             );
-            sink.success(getJsonObject(tempData, tempData.getJSONObject("videoData")));
+            sink.success(
+              getJsonObject(tempData, tempData.getJSONObject("videoData"))
+            );
           }
         })
       ).flatMap(json -> {
@@ -69,7 +71,9 @@ public class BilibiliGetApplication {
 
       if (dash != null) {
         Function<String, Consumer<MonoSink<File>>> f =
-          key -> sink -> sink.success(download(getMax(dash.getJSONArray(key))));
+          key -> sink -> new Thread(() ->
+            sink.success(download(getMax(dash.getJSONArray(key))))
+          ).start();
 
         return Mono.zip(
           Mono.create(f.apply("video")),
@@ -77,7 +81,9 @@ public class BilibiliGetApplication {
         ).map(tuple -> List.of(tuple.getT1(), tuple.getT2()));
       } else {
         return Mono.create(sink ->
-          sink.success(List.of(download(data.getJSONArray("durl").getJSONObject(0).getString("url"))))
+          sink.success(List.of(
+            download(data.getJSONArray("durl").getJSONObject(0).getString("url"))
+          ))
         );
       }
     }).subscribe(list -> {
