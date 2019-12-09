@@ -123,7 +123,7 @@ public class BilibiliGetApplication {
     return jsonArray.toJavaList(JSONObject.class).stream()
       .max(Comparator.comparing(a -> a.getLong("bandwidth")))
       .map(json -> json.getString("baseUrl"))
-      .orElse(null);
+      .get();
   }
 
   private static File download(String url) {
