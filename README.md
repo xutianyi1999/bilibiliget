@@ -2,6 +2,7 @@
 #### environment: jdk11, ffmpeg
 
 ## usages
+#### ffmpeg 放入环境变量
 ```shell
 mvn install;
 cd target;
