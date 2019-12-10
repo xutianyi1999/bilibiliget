@@ -47,22 +47,20 @@ public class BilibiliGetApplication {
       .map(Element::data)
       .filter(data -> data.contains("window.__INITIAL_STATE__") || data.contains("window.__playinfo__"))
       .next()
-      .flatMap(data -> Mono.<JSONObject>create(sink -> {
+      .map(data -> {
           logger.info("Get json data");
 
           String[] str = data.split("=", 2);
 
           if (data.contains("window.__playinfo__")) {
-            sink.success(JSON.parseObject(str[1]));
+            return JSON.parseObject(str[1]);
           } else {
             JSONObject tempData = JSON.parseObject(
               str[1].split(";", 2)[0]
             );
-            sink.success(
-              getJsonObject(tempData, tempData.getJSONObject("videoData"))
-            );
+            return getJsonObject(tempData, tempData.getJSONObject("videoData"));
           }
-        })
+        }
       ).flatMap(json -> {
       logger.info("Start download");
 
@@ -80,10 +78,10 @@ public class BilibiliGetApplication {
           Mono.create(f.apply("audio"))
         ).map(tuple -> List.of(tuple.getT1(), tuple.getT2()));
       } else {
-        return Mono.create(sink ->
-          sink.success(List.of(
+        return Mono.just(
+          List.of(
             download(data.getJSONArray("durl").getJSONObject(0).getString("url"))
-          ))
+          )
         );
       }
     }).subscribe(list -> {
