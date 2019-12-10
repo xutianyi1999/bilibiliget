@@ -18,13 +18,27 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 public class BilibiliGetApplication {
 
   private static String target;
+  private static AtomicInteger flag = new AtomicInteger();
+  private static final Predicate<String> FILTER = data -> {
+    if (data.contains("window.__playinfo__")) {
+      flag.set(1);
+      return true;
+    } else if (data.contains("window.__INITIAL_STATE__")) {
+      flag.set(2);
+      return true;
+    } else {
+      return false;
+    }
+  };
 
   public static void main(String[] args) throws IOException {
     Logger logger = Logger.getGlobal();
@@ -45,23 +59,22 @@ public class BilibiliGetApplication {
         .stream()
     )
       .map(Element::data)
-      .filter(data -> data.contains("window.__INITIAL_STATE__") || data.contains("window.__playinfo__"))
+      .filter(FILTER)
       .next()
       .map(data -> {
-          logger.info("Get json data");
+        logger.info("Get json data");
 
-          String[] str = data.split("=", 2);
+        String str = data.split("=", 2)[1];
 
-          if (data.contains("window.__playinfo__")) {
-            return JSON.parseObject(str[1]);
-          } else {
-            JSONObject tempData = JSON.parseObject(
-              str[1].split(";", 2)[0]
-            );
-            return getJsonObject(tempData, tempData.getJSONObject("videoData"));
-          }
+        if (flag.get() == 1) {
+          return JSON.parseObject(str);
+        } else {
+          JSONObject tempData = JSON.parseObject(
+            str.split(";", 2)[0]
+          );
+          return getJsonObject(tempData, tempData.getJSONObject("videoData"));
         }
-      ).flatMap(json -> {
+      }).flatMap(json -> {
       logger.info("Start download");
 
       JSONObject data = json.getJSONObject("data");
