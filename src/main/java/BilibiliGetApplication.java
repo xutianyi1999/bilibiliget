@@ -69,10 +69,9 @@ public class BilibiliGetApplication {
         if (flag.get() == 1) {
           return JSON.parseObject(str);
         } else {
-          JSONObject tempData = JSON.parseObject(
-            str.split(";", 2)[0]
+          return getJsonObject(
+            JSON.parseObject(str.split(";", 2)[0])
           );
-          return getJsonObject(tempData);
         }
       }).flatMap(json -> {
       logger.info("Start download");
@@ -93,9 +92,7 @@ public class BilibiliGetApplication {
       } else {
         return Mono.just(
           List.of(
-            download(
-              data.getJSONArray("durl").getJSONObject(0).getString("url")
-            )
+            download(data.getJSONArray("durl").getJSONObject(0).getString("url"))
           )
         );
       }
