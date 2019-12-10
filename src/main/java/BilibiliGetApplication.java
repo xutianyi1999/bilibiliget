@@ -72,7 +72,7 @@ public class BilibiliGetApplication {
           JSONObject tempData = JSON.parseObject(
             str.split(";", 2)[0]
           );
-          return getJsonObject(tempData, tempData.getJSONObject("videoData"));
+          return getJsonObject(tempData);
         }
       }).flatMap(json -> {
       logger.info("Start download");
@@ -93,7 +93,9 @@ public class BilibiliGetApplication {
       } else {
         return Mono.just(
           List.of(
-            download(data.getJSONArray("durl").getJSONObject(0).getString("url"))
+            download(
+              data.getJSONArray("durl").getJSONObject(0).getString("url")
+            )
           )
         );
       }
@@ -104,7 +106,8 @@ public class BilibiliGetApplication {
         File videoFile = list.get(0);
         File audioFile = list.get(1);
         String finalFile = "final_" + videoFile.getName();
-        String command = "ffmpeg -i " + videoFile.getAbsolutePath() + " -i " + audioFile.getAbsolutePath() + " -c copy ./" + finalFile;
+        String command = "ffmpeg -i " + videoFile.getAbsolutePath() + " -i " +
+          audioFile.getAbsolutePath() + " -c copy ./" + finalFile;
 
         try {
           Runtime.getRuntime().exec(command).waitFor();
@@ -126,9 +129,11 @@ public class BilibiliGetApplication {
     });
   }
 
-  private static JSONObject getJsonObject(JSONObject tempData, JSONObject videoData) {
+  private static JSONObject getJsonObject(JSONObject tempData) {
     try (InputStream inputStream = getUrlConnection(
-      new URL(Commons.PLAYER_API + "?&avid=" + tempData.get("aid") + "&cid=" + videoData.get("cid") + "&fnval=16")
+      new URL(Commons.PLAYER_API + "?&avid=" + tempData.get("aid") + "&cid=" +
+        tempData.getJSONObject("videoData").get("cid") + "&fnval=16"
+      )
     ).getInputStream()) {
       return JSON.parseObject(inputStream, JSONObject.class);
     } catch (Exception e) {
