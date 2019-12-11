@@ -114,7 +114,7 @@ public class BilibiliGetApplication {
           }
           logger.info("Success " + finalFile);
         } catch (Exception e) {
-          logger.severe("Call ffmpeg error");
+          logger.severe("Run error");
           e.printStackTrace();
         }
       } else {
