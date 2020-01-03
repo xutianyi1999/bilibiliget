@@ -51,12 +51,11 @@ public class BilibiliGetApplication {
     logger.info("Process start");
     target = args[0];
 
-    Flux.fromStream(
+    Flux.fromIterable(
       Jsoup.connect(target)
         .header("User-Agent", Commons.USER_AGENT)
         .get()
         .getElementsByTag("script")
-        .stream()
     )
       .map(Element::data)
       .filter(FILTER)
