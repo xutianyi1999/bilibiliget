@@ -102,11 +102,14 @@ public class BilibiliGetApplication {
         File videoFile = list.get(0);
         File audioFile = list.get(1);
         String finalFile = "final_" + videoFile.getName();
-        String command = "ffmpeg -i " + videoFile.getAbsolutePath() + " -i " +
-          audioFile.getAbsolutePath() + " -c copy ./" + finalFile;
 
         try {
-          Runtime.getRuntime().exec(command).waitFor();
+          new ProcessBuilder(
+            "ffmpeg",
+            "-i", videoFile.getAbsolutePath(),
+            "-i", audioFile.getAbsolutePath(),
+            "-c", "copy", "./" + finalFile
+          ).start().waitFor();
 
           if (!videoFile.delete() || !audioFile.delete()) {
             logger.severe("Delete temp error");
