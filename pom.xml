@@ -21,19 +21,19 @@
     <dependency>
       <groupId>org.jsoup</groupId>
       <artifactId>jsoup</artifactId>
-      <version>1.12.1</version>
+      <version>1.13.1</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/com.alibaba/fastjson -->
     <dependency>
       <groupId>com.alibaba</groupId>
       <artifactId>fastjson</artifactId>
-      <version>1.2.62</version>
+      <version>1.2.66</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/io.projectreactor/reactor-core -->
     <dependency>
       <groupId>io.projectreactor</groupId>
       <artifactId>reactor-core</artifactId>
-      <version>3.3.1.RELEASE</version>
+      <version>3.3.3.RELEASE</version>
     </dependency>
   </dependencies>
 
@@ -42,7 +42,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.1</version>
+        <version>3.2.2</version>
         <executions>
           <execution>
             <phase>package</phase>
