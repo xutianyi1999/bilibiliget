@@ -1,0 +1,1 @@
+native-image --no-server --allow-incomplete-classpath --report-unsupported-elements-at-runtime --enable-http --enable-https -jar bilibiliget-1.0-SNAPSHOT.jar --no-fallback
