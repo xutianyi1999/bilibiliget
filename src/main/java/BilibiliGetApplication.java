@@ -7,7 +7,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
@@ -16,6 +15,7 @@ import java.net.URLConnection;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -79,7 +79,7 @@ public class BilibiliGetApplication {
       JSONObject dash = data.getJSONObject("dash");
 
       if (dash != null) {
-        Function<String, Consumer<MonoSink<File>>> f =
+        Function<String, Consumer<MonoSink<Path>>> f =
           key -> sink -> new Thread(() ->
             sink.success(download(getMax(dash.getJSONArray(key))))
           ).start();
@@ -99,19 +99,19 @@ public class BilibiliGetApplication {
       if (list.size() == 2) {
         logger.info("Call ffmpeg");
 
-        File videoFile = list.get(0);
-        File audioFile = list.get(1);
-        String finalFile = "final_" + videoFile.getName();
+        Path videoPath = list.get(0);
+        Path audioPath = list.get(1);
+        String finalFile = "final_" + videoPath.getFileName().toString();
 
         try {
           new ProcessBuilder(
             "ffmpeg",
-            "-i", videoFile.getAbsolutePath(),
-            "-i", audioFile.getAbsolutePath(),
-            "-c", "copy", "./" + finalFile
+            "-i", videoPath.toAbsolutePath().toString(),
+            "-i", audioPath.toAbsolutePath().toString(),
+            "-c", "copy", finalFile
           ).start().waitFor();
 
-          if (!videoFile.delete() || !audioFile.delete()) {
+          if (!videoPath.toFile().delete() || !audioPath.toFile().delete()) {
             logger.severe("Delete temp error");
           }
           logger.info("Success " + finalFile);
@@ -120,7 +120,7 @@ public class BilibiliGetApplication {
           e.printStackTrace();
         }
       } else {
-        logger.info("Success " + list.get(0).getName());
+        logger.info("Success " + list.get(0).getFileName());
       }
     }, throwable -> {
       logger.severe("Run error");
@@ -147,20 +147,26 @@ public class BilibiliGetApplication {
       .get();
   }
 
-  private static File download(String url) {
+  private static Path download(String url) {
     try {
       URL urlObject = new URL(url);
       URLConnection urlConnection = getUrlConnection(urlObject);
-      File file = new File("./", new File(urlObject.getPath()).getName().replace("m4s", "mp4"));
+
+      String fileName = Path.of(urlObject.getPath())
+        .getFileName()
+        .toString()
+        .replace("m4s", "mp4");
+
+      Path filePath = Path.of(fileName);
 
       try (
-        RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+        RandomAccessFile randomAccessFile = new RandomAccessFile(filePath.toFile(), "rw");
         FileChannel fileChannel = randomAccessFile.getChannel();
         InputStream inputStream = urlConnection.getInputStream();
         ReadableByteChannel urlChannel = Channels.newChannel(inputStream)
       ) {
         fileChannel.transferFrom(urlChannel, 0, urlConnection.getContentLengthLong());
-        return file;
+        return filePath;
       }
     } catch (Exception e) {
       throw new RuntimeException(e);
