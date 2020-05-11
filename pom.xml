@@ -27,13 +27,25 @@
     <dependency>
       <groupId>com.alibaba</groupId>
       <artifactId>fastjson</artifactId>
-      <version>1.2.66</version>
+      <version>1.2.68</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/io.projectreactor/reactor-core -->
     <dependency>
       <groupId>io.projectreactor</groupId>
       <artifactId>reactor-core</artifactId>
-      <version>3.3.3.RELEASE</version>
+      <version>3.3.5.RELEASE</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.bytedeco/ffmpeg -->
+    <dependency>
+      <groupId>org.bytedeco</groupId>
+      <artifactId>ffmpeg</artifactId>
+      <version>4.2.2-1.5.3</version>
+    </dependency>
+    <dependency>
+      <groupId>org.bytedeco</groupId>
+      <artifactId>ffmpeg</artifactId>
+      <version>4.2.2-1.5.3</version>
+      <classifier>windows-x86_64</classifier>
     </dependency>
   </dependencies>
 

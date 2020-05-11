@@ -1,6 +1,7 @@
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import org.bytedeco.javacpp.Loader;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import reactor.core.publisher.Flux;
@@ -18,27 +19,13 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 public class BilibiliGetApplication {
 
   private static String target;
-  private static AtomicInteger flag = new AtomicInteger();
-  private static final Predicate<String> FILTER = data -> {
-    if (data.contains("window.__playinfo__")) {
-      flag.set(1);
-      return true;
-    } else if (data.contains("window.__INITIAL_STATE__")) {
-      flag.set(2);
-      return true;
-    } else {
-      return false;
-    }
-  };
 
   public static void main(String[] args) throws IOException {
     Logger logger = Logger.getGlobal();
@@ -58,14 +45,14 @@ public class BilibiliGetApplication {
         .getElementsByTag("script")
     )
       .map(Element::data)
-      .filter(FILTER)
+      .filter(str -> str.contains("window.__playinfo__") || str.contains("window.__INITIAL_STATE__"))
       .next()
       .map(data -> {
         logger.info("Get json data");
 
         String str = data.split("=", 2)[1];
 
-        if (flag.get() == 1) {
+        if (data.contains("window.__playinfo__")) {
           return JSON.parseObject(str);
         } else {
           return getJsonObject(
@@ -104,8 +91,10 @@ public class BilibiliGetApplication {
         String finalFile = "final_" + videoPath.getFileName().toString();
 
         try {
+          String ffmpeg = Loader.load(org.bytedeco.ffmpeg.ffmpeg.class);
+
           new ProcessBuilder(
-            "ffmpeg",
+            ffmpeg,
             "-i", videoPath.toAbsolutePath().toString(),
             "-i", audioPath.toAbsolutePath().toString(),
             "-c", "copy", finalFile
